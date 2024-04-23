@@ -1,4 +1,11 @@
-# =================README=====================
+import datetime
+import math
+from daynight import caldaynight
+from openpyxl import load_workbook
+import csv
+from tail_to_type import b773, b772
+
+# ======================================README=====================================================
 # Start from here
 # 1. Locate CX logbook directory and change the csv reader path below.
 # e.g. if logbook is at root directory, enter "./Merged1_LogBook_2017 Mar-2019 Feb]"
@@ -14,16 +21,7 @@ name = "kenneth"
 p2x = True
 
 # 4. (optional) go to daynight.py and adjust parameters if needed.
-# =============================================
-
-
-
-import datetime
-import math
-from daynight import caldaynight
-from openpyxl import load_workbook
-import csv
-from tail_to_type import b773
+# =================================================================================================
 
 log = []
 # log = [{departure_date:2022/12/12, off_block_UTC: 12:22....}, {},....]
@@ -82,6 +80,8 @@ def logger(reader):
 
             if flight_info[4] in b773:
                 ac_type = 'B777-300'
+            elif flight_info[4] in b772:
+                ac_type = 'B777-200'
             else:
                 ac_type = 'B777-300ER'
             if len(flight_info) == 13:
