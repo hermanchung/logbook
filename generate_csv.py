@@ -2,14 +2,13 @@
 # Start from here
 # 1. Locate CX logbook directory and change the csv reader path below.
 # e.g. if logbook is at root directory, enter "./Merged1_LogBook_2017 Mar-2019 Feb]"
-logbook_paths = ["./herman/Merged1_LogBook_2017 Mar-2019 Feb.txt",
-                 "./herman/Merged1_LogBook_2019 Feb-2021 Jan.txt",
-                 "./herman/Merged1_LogBook_2022 Nov-2024 Apr.txt",
-                 "./herman/Merged1_LogBook_2024 Mar-2024 Apr.txt"]
+logbook_paths = ["./kenneth/Merged1_LogBook_2017 Jan-2018 Dec.txt",
+                 "./kenneth/Merged1_LogBook_2018 Dec-2020 Nov.txt",
+                 "./kenneth/Merged1_LogBook_2022 Nov-2024 Apr.txt",]
 
 
 # 2. Whose logbook is this?
-name = "herman"
+name = "kenneth"
 
 # 3. If P2X not needed, set p2x to False (automatically revert to P2/P1US)
 p2x = True
@@ -45,7 +44,7 @@ def logger(reader):
         if row[0][:2] != "20":
             continue
         flight_info = row[0].split()
-        print(flight_info)
+
         if len(flight_info) == 4:
             # sim duty
             if log and log[-1]['departure_date'] == flight_info[0] and (not log[-1]["isFlightDuty"] and log[-1]["duty_code"] == flight_info[3])  :
@@ -56,9 +55,16 @@ def logger(reader):
                         })
         else:
             # flight duty
-            if log and log[-1]['departure_date'] == flight_info[0] and log[-1]['origin'] == iata_to_icao[flight_info[2]]:
-                print("DUPLICATE")
-                continue
+            if log and len(log[-1]) == 13:
+                if (log and log[-1]['departure_date'] == flight_info[0] and
+                        log[-1]['origin'] == iata_to_icao[flight_info[2]]):
+                    print("DUPLICATE")
+                    continue
+            else:
+                if (log and log[-1]['departure_date'] == flight_info[0] and
+                        (log[-1]['duty_code'] == flight_info[1])):
+                    print("DUPLICATE")
+                    continue
 
             # Adjust CX logbook departure date(local) to UTC.
             # if off block time is +1 or -1 ,adjust departure date
@@ -78,6 +84,9 @@ def logger(reader):
                 ac_type = 'B777-300'
             else:
                 ac_type = 'B777-300ER'
+            if len(flight_info) == 13:
+                # missing airborne and landing time
+                raise Exception("Missing airborne and landing time in log, please go and edit your log.")
 
             log.append({"isFlightDuty": True,
 
@@ -372,7 +381,7 @@ for sheet in wb:
                     cell.value = f'{log[current_flight]["origin"]}    {log[current_flight]["dest"]}'
 
                 elif column_range[cell.column] == "I" and log[current_flight]['isFlightDuty']:
-                    if not p2x and log[current_flight]['takeoff'] or log[current_flight]['landing']:
+                    if not p2x and (log[current_flight]['takeoff'] or log[current_flight]['landing']):
                         cell.value = log[current_flight]['day']
 
                 elif column_range[cell.column] == "J" and log[current_flight]['isFlightDuty']:
@@ -382,7 +391,7 @@ for sheet in wb:
                     cell.value = log[current_flight]['day']
 
                 elif column_range[cell.column] == "M" and log[current_flight]['isFlightDuty']:
-                    if not p2x and log[current_flight]['takeoff'] or log[current_flight]['landing']:
+                    if not p2x and (log[current_flight]['takeoff'] or log[current_flight]['landing']):
                         cell.value = log[current_flight]['night']
                 elif column_range[cell.column] == "N" and log[current_flight]['isFlightDuty']:
                     if not p2x and not log[current_flight]['takeoff'] and not log[current_flight]['landing']:
