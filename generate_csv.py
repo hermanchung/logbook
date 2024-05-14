@@ -9,13 +9,14 @@ from tail_to_type import b773, b772
 # Start from here
 # 1. Locate CX logbook directory and change the csv reader path below.
 # e.g. if logbook is at root directory, enter "./Merged1_LogBook_2017 Mar-2019 Feb]"
-logbook_paths = ["./kenneth/Merged1_LogBook_2017 Jan-2018 Dec.txt",
-                 "./kenneth/Merged1_LogBook_2018 Dec-2020 Nov.txt",
-                 "./kenneth/Merged1_LogBook_2022 Nov-2024 Apr.txt",]
-
+logbook_paths = ["./herman/Merged1_LogBook_2017 Mar-2019 Feb.txt",
+                 "./herman/Merged1_LogBook_2019 Feb-2021 Jan.txt",
+                 "./herman/Merged1_LogBook_2022 Nov-2024 Apr.txt",
+                 "./herman/Merged1_LogBook_2024 Mar-2024 Apr.txt",
+                 "./herman/Merged1_LogBook_2024 Mar-2024 May.txt"]
 
 # 2. Whose logbook is this?
-name = "kenneth"
+name = "herman"
 
 # 3. If P2X not needed, set p2x to False (automatically revert to P2/P1US)
 p2x = True
@@ -34,7 +35,7 @@ with open("iata-icao.csv", encoding="utf8") as iataicaomap:
             continue
         iata_to_icao[row[2]] = row[3]
 
-
+flight_set = set()
 def logger(reader):
     for row in reader:
         if not row:
@@ -45,23 +46,20 @@ def logger(reader):
 
         if len(flight_info) == 4:
             # sim duty
-            if log and log[-1]['departure_date'] == flight_info[0] and (not log[-1]["isFlightDuty"] and log[-1]["duty_code"] == flight_info[3])  :
+            if flight_info[0] + flight_info[3] in flight_set:
+                print("DUPLICATE SIM")
                 continue
             log.append({"isFlightDuty": False,
                         "departure_date": flight_info[0],
                         "duty_code": flight_info[3],
                         })
+            flight_set.add(flight_info[0]+flight_info[3])
+
         else:
             # flight duty
             if log and len(log[-1]) == 13:
-                if (log and log[-1]['departure_date'] == flight_info[0] and
-                        log[-1]['origin'] == iata_to_icao[flight_info[2]]):
-                    print("DUPLICATE")
-                    continue
-            else:
-                if (log and log[-1]['departure_date'] == flight_info[0] and
-                        (log[-1]['duty_code'] == flight_info[1])):
-                    print("DUPLICATE")
+                if flight_info[0]+flight_info[2]+flight_info[3]+flight_info[6] in flight_set:
+                    print("DUPLICATE FLIGHT")
                     continue
 
             # Adjust CX logbook departure date(local) to UTC.
@@ -114,7 +112,7 @@ def logger(reader):
 
                         "landing": flight_info[11],
                         })
-
+            flight_set.add(flight_info[0]+flight_info[2]+flight_info[3]+flight_info[6])
 
 # READS CX LOGBOOK FORMAT HERE, CHANGE DIRECTORY, ADD CSV READER IF MULTIPLE LOGBOOKS EXIST.
 for path in logbook_paths:
@@ -366,7 +364,7 @@ for sheet in wb:
                     cell.value = log[current_flight]['reg']
                 elif column_range[cell.column] == "D" and log[current_flight]['isFlightDuty']:
                     cell.value = log[current_flight]['pic']
-                elif column_range[cell.column] == "E" and log[current_flight]['isFlightDuty']:
+                elif column_range[cell.column] == "E":
                     cell.value = "Self"
                 elif column_range[cell.column] == "F" and log[current_flight]['isFlightDuty']:
                     if p2x:
@@ -380,32 +378,32 @@ for sheet in wb:
                 elif column_range[cell.column] == "G" and log[current_flight]['isFlightDuty']:
                     cell.value = f'{log[current_flight]["origin"]}    {log[current_flight]["dest"]}'
 
-                elif column_range[cell.column] == "I" and log[current_flight]['isFlightDuty']:
+                elif column_range[cell.column] == "H" and log[current_flight]['isFlightDuty']:
                     if not p2x and (log[current_flight]['takeoff'] or log[current_flight]['landing']):
                         cell.value = log[current_flight]['day']
 
-                elif column_range[cell.column] == "J" and log[current_flight]['isFlightDuty']:
+                elif column_range[cell.column] == "I" and log[current_flight]['isFlightDuty']:
                     if not p2x and not log[current_flight]['takeoff'] and not log[current_flight]['landing']:
                         cell.value = log[current_flight]['day']
-                elif column_range[cell.column] == "K" and log[current_flight]['isFlightDuty'] and p2x:
+                elif column_range[cell.column] == "J" and log[current_flight]['isFlightDuty'] and p2x:
                     cell.value = log[current_flight]['day']
 
-                elif column_range[cell.column] == "M" and log[current_flight]['isFlightDuty']:
+                elif column_range[cell.column] == "L" and log[current_flight]['isFlightDuty']:
                     if not p2x and (log[current_flight]['takeoff'] or log[current_flight]['landing']):
                         cell.value = log[current_flight]['night']
-                elif column_range[cell.column] == "N" and log[current_flight]['isFlightDuty']:
+                elif column_range[cell.column] == "M" and log[current_flight]['isFlightDuty']:
                     if not p2x and not log[current_flight]['takeoff'] and not log[current_flight]['landing']:
                         cell.value = log[current_flight]['night']
-                elif column_range[cell.column] == "O" and log[current_flight]['isFlightDuty'] and p2x:
+                elif column_range[cell.column] == "N" and log[current_flight]['isFlightDuty'] and p2x:
                     cell.value = log[current_flight]['night']
 
-                elif column_range[cell.column] == "Q" and log[current_flight]['isFlightDuty']:
+                elif column_range[cell.column] == "P" and log[current_flight]['isFlightDuty']:
                     cell.value = log[current_flight]['day'] + log[current_flight]['night']
-                elif column_range[cell.column] == "Q" and not log[current_flight]['isFlightDuty']:
+                elif column_range[cell.column] == "P" and not log[current_flight]['isFlightDuty']:
                     cell.value = 2
-                elif column_range[cell.column] == "R" and not log[current_flight]['isFlightDuty']:
+                elif column_range[cell.column] == "Q" and not log[current_flight]['isFlightDuty']:
                     cell.value = 4
-                elif column_range[cell.column] == "S":
+                elif column_range[cell.column] == "R":
                     if not log[current_flight]['isFlightDuty']:
                         cell.value = log[current_flight]['duty_code']
                     current_flight += 1
