@@ -9,6 +9,10 @@ from tail_to_type import b773, b772
 # Start from here
 # 1. Locate CX logbook directory and change the csv reader path below.
 # e.g. if logbook is at root directory, enter "./Merged1_LogBook_2017 Mar-2019 Feb]"
+# logbook_paths = ["./kenneth/Merged1_LogBook_2017 Jan-2018 Dec.txt",
+#                  "./kenneth/Merged1_LogBook_2018 Dec-2020 Nov.txt",
+#                  "./kenneth/Merged1_LogBook_2022 Nov-2024 Apr.txt",
+#                  "./kenneth/Merged1_LogBook_2024 Apr-2024 May.txt",]
 logbook_paths = ["./herman/Merged1_LogBook_2017 Mar-2019 Feb.txt",
                  "./herman/Merged1_LogBook_2019 Feb-2021 Jan.txt",
                  "./herman/Merged1_LogBook_2022 Nov-2024 Apr.txt",
@@ -27,15 +31,20 @@ p2x = True
 log = []
 # log = [{departure_date:2022/12/12, off_block_UTC: 12:22....}, {},....]
 
+
+exam_sims = ["I8", "IR", "QQ", "M3", "M6", "P1", "P2", "P3", "P4", "P5", "P6", "S5", "Q2"]
+
 iata_to_icao = {}
 with open("iata-icao.csv", encoding="utf8") as iataicaomap:
     reader = csv.reader(iataicaomap)
     for row in reader:
-        if row[5][-1] not in {'0','1','2','3','4','5','6','7','8','9'}:
+        if row[5][-1] not in {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}:
             continue
         iata_to_icao[row[2]] = row[3]
 
 flight_set = set()
+
+
 def logger(reader):
     for row in reader:
         if not row:
@@ -53,12 +62,12 @@ def logger(reader):
                         "departure_date": flight_info[0],
                         "duty_code": flight_info[3],
                         })
-            flight_set.add(flight_info[0]+flight_info[3])
+            flight_set.add(flight_info[0] + flight_info[3])
 
         else:
             # flight duty
             if log and len(log[-1]) == 13:
-                if flight_info[0]+flight_info[2]+flight_info[3]+flight_info[6] in flight_set:
+                if flight_info[0] + flight_info[2] + flight_info[3] + flight_info[6] in flight_set:
                     print("DUPLICATE FLIGHT")
                     continue
 
@@ -88,38 +97,38 @@ def logger(reader):
 
             log.append({"isFlightDuty": True,
 
-                        "departure_date":flight_info[0],
+                        "departure_date": flight_info[0],
 
-                        "reg" : flight_info[4],
+                        "reg": flight_info[4],
 
-                        "type" : ac_type,
+                        "type": ac_type,
 
-                        "pic" : flight_info[-2] + " " + flight_info[-1],
+                        "pic": flight_info[-2] + " " + flight_info[-1],
 
-                        "origin":iata_to_icao[flight_info[2]],
+                        "origin": iata_to_icao[flight_info[2]],
 
-                        "dest":iata_to_icao[flight_info[3]],
+                        "dest": iata_to_icao[flight_info[3]],
 
-                        "off_block_UTC":flight_info[6],
+                        "off_block_UTC": flight_info[6],
 
-                        "airborne_UTC":flight_info[7],
+                        "airborne_UTC": flight_info[7],
 
-                        "landing_UTC":flight_info[8],
+                        "landing_UTC": flight_info[8],
 
-                        "on_block_UTC":flight_info[9],
+                        "on_block_UTC": flight_info[9],
 
                         "takeoff": flight_info[10],
 
                         "landing": flight_info[11],
                         })
-            flight_set.add(flight_info[0]+flight_info[2]+flight_info[3]+flight_info[6])
+            flight_set.add(flight_info[0] + flight_info[2] + flight_info[3] + flight_info[6])
+
 
 # READS CX LOGBOOK FORMAT HERE, CHANGE DIRECTORY, ADD CSV READER IF MULTIPLE LOGBOOKS EXIST.
 for path in logbook_paths:
     with open(path, encoding="utf8") as logbook1:
         reader = csv.reader(logbook1)
         logger(reader)
-
 
 for i in range(len(log)):
     flight = log[i]
@@ -131,7 +140,8 @@ for i in range(len(log)):
         airborne_UTC = flight['airborne_UTC']
         landing_UTC = flight['landing_UTC']
         on_block_UTC = flight['on_block_UTC']
-        log[i]['day'], log[i]['night'] = caldaynight(origin,dest,airborne_UTC,landing_UTC,departure_date,off_block_UTC,on_block_UTC,p2x)
+        log[i]['day'], log[i]['night'] = caldaynight(origin, dest, airborne_UTC, landing_UTC, departure_date,
+                                                     off_block_UTC, on_block_UTC, p2x)
 
 total_day = 0
 total_night = 0
@@ -147,30 +157,33 @@ for r in log:
     print(r)
 total = total_day + total_night
 
-print(total,total_day,total_night,total_sectors)
+print(
+    f"total hours:{total},\ntotal day hours:{total_day},\ntotal night hours:{total_night},\nno. of sectors: {total_sectors}")
 
 # daynight hours, change resulting file name as required
 with open(f"./results/daynighthours-{name}.csv", "w", newline='') as file:
     writer = csv.writer(file)
-    field = ['isFlightDuty','departure date UTC','type','registration','pilot-in-command','origin','dest','off block UTC','airborne UTC','landing UTC','on block UTC','day','night','duty code']
+    field = ['isFlightDuty', 'departure date UTC', 'type', 'registration', 'pilot-in-command', 'origin', 'dest',
+             'off block UTC', 'airborne UTC', 'landing UTC', 'on block UTC', 'day', 'night', 'duty code']
     writer.writerow(field)
     for flight in log:
         if flight['isFlightDuty']:
-            writer.writerow([True,flight['departure_date'],flight['type'],flight['reg'],flight['pic'],flight['origin'],
-                             flight['dest'],flight['off_block_UTC'],flight['airborne_UTC'],flight['landing_UTC'],
-                            flight['on_block_UTC'],flight['day'],flight['night'],''])
+            writer.writerow(
+                [True, flight['departure_date'], flight['type'], flight['reg'], flight['pic'], flight['origin'],
+                 flight['dest'], flight['off_block_UTC'], flight['airborne_UTC'], flight['landing_UTC'],
+                 flight['on_block_UTC'], flight['day'], flight['night'], ''])
         else:
-            writer.writerow([False,flight['departure_date'],"","","","","","","","","","","",flight['duty_code']])
-    writer.writerow(["","","","","","","","","","","total day/night",total_day,total_night])
-    writer.writerow(["","","","","","","","","","","","total hours:",total])
-    writer.writerow(["", "", "", "","", "","","", "", "", "", "total sectors:", total_sectors])
-
+            writer.writerow(
+                [False, flight['departure_date'], "", "", "", "", "", "", "", "", "", "", "", flight['duty_code']])
+    writer.writerow(["", "", "", "", "", "", "", "", "", "", "total day/night", total_day, total_night])
+    writer.writerow(["", "", "", "", "", "", "", "", "", "", "", "total hours:", total])
+    writer.writerow(["", "", "", "", "", "", "", "", "", "", "", "total sectors:", total_sectors])
 
 # REPORT LEFT PAGE, change resulting file name as required
 with open(f"./results/{name}_report_left.csv", "w", newline="") as file:
     writer = csv.writer(file)
-    fields = ['Year/20XX','Month/Date','Type','Registration','Pilot-in-command','Co-pilot or student',
-              "Holder's operating capacity",'  From   To ','Take-offs','Landings']
+    fields = ['Year/20XX', 'Month/Date', 'Type', 'Registration', 'Pilot-in-command', 'Co-pilot or student',
+              "Holder's operating capacity", '  From   To ', 'Take-offs', 'Landings']
     writer.writerow(fields)
     for flight in log:
         if flight['isFlightDuty']:
@@ -224,14 +237,13 @@ with open(f"./results/{name}_report_left.csv", "w", newline="") as file:
                              "",
                              "",
                              ""
-            ])
-
+                             ])
 
 # REPORT RIGHT PAGE, change resulting file name as required
 with open(f"./results/{name}_report_right.csv", "w", newline="") as file:
     writer = csv.writer(file)
-    fields = ['P1 day','P2 day', 'P2X day', 'Dual day','P1 night','P2 night', 'P2X night', 'Dual night',
-              'Instrument Flying','Simulator Time','Remarks']
+    fields = ['P1 day', 'P2 day', 'P2X day', 'Dual day', 'P1 night', 'P2 night', 'P2X night', 'Dual night',
+              'Instrument Flying', 'Simulator Time', 'Remarks']
     writer.writerow(fields)
     for flight in log:
         if flight["isFlightDuty"]:
@@ -250,7 +262,7 @@ with open(f"./results/{name}_report_right.csv", "w", newline="") as file:
                     ""
                 ])
             elif flight['takeoff'] or flight['landing']:
-                #PF sector, log P1/US (P1 column)
+                # PF sector, log P1/US (P1 column)
                 writer.writerow([
                     flight['day'],
                     "",
@@ -281,17 +293,16 @@ with open(f"./results/{name}_report_right.csv", "w", newline="") as file:
                 ])
         else:
             writer.writerow([
-                "","","","","","","","",
+                "", "", "", "", "", "", "", "",
                 "2",
                 "4",
                 flight['duty_code']
             ])
 
-
 # Generate CAD Format report
 # calculate maximum pages needed for the report
 first_flight_dept_year, final_flight_dept_year = int(log[0]['departure_date'][:4]), int(log[-1]['departure_date'][:4])
-total_pages = math.ceil(len(log)/19) + final_flight_dept_year - first_flight_dept_year
+total_pages = math.ceil(len(log) / 19) + final_flight_dept_year - first_flight_dept_year
 wb = load_workbook(filename='./HKCAD_logbook_format.xlsx')
 sheet = wb['Sheet1']
 column_range = {
@@ -366,28 +377,36 @@ for sheet in wb:
                     cell.value = log[current_flight]['pic']
                 elif column_range[cell.column] == "E":
                     cell.value = "Self"
-                elif column_range[cell.column] == "F" and log[current_flight]['isFlightDuty']:
-                    if p2x:
-                        cell.value = "P2X"
-                    elif log[current_flight]['takeoff'] or log[current_flight]['landing']:
-                        cell.value = "P1/US"
+                elif column_range[cell.column] == "F":
+                    if log[current_flight]['isFlightDuty']:
+                        if p2x:
+                            cell.value = "P2X"
+                        elif log[current_flight]['takeoff'] or log[current_flight]['landing']:
+                            cell.value = "P1/US"
+                        else:
+                            cell.value = "P2"
                     else:
-                        cell.value = "P2"
-                elif column_range[cell.column] == "F" and not log[current_flight]['isFlightDuty']:
-                    cell.value = "P/UT"
+                        if log[current_flight]['duty_code'] in exam_sims:
+                            cell.value = "P1/US"
+                        else:
+                            cell.value = "P/UT"
+
                 elif column_range[cell.column] == "G" and log[current_flight]['isFlightDuty']:
                     cell.value = f'{log[current_flight]["origin"]}    {log[current_flight]["dest"]}'
 
-                elif column_range[cell.column] == "H" and log[current_flight]['isFlightDuty']:
-                    if not p2x and (log[current_flight]['takeoff'] or log[current_flight]['landing']):
-                        cell.value = log[current_flight]['day']
-
+                elif column_range[cell.column] == "H" :
+                    if log[current_flight]['isFlightDuty']:
+                        if not p2x and (log[current_flight]['takeoff'] or log[current_flight]['landing']):
+                            cell.value = log[current_flight]['day']
+                    elif log[current_flight]['duty_code'] in exam_sims:
+                        cell.value = 2
                 elif column_range[cell.column] == "I" and log[current_flight]['isFlightDuty']:
                     if not p2x and not log[current_flight]['takeoff'] and not log[current_flight]['landing']:
                         cell.value = log[current_flight]['day']
                 elif column_range[cell.column] == "J" and log[current_flight]['isFlightDuty'] and p2x:
                     cell.value = log[current_flight]['day']
-
+                elif column_range[cell.column] == "K" and not log[current_flight]["isFlightDuty"] and log[current_flight]["duty_code"] not in exam_sims:
+                    cell.value = 4
                 elif column_range[cell.column] == "L" and log[current_flight]['isFlightDuty']:
                     if not p2x and (log[current_flight]['takeoff'] or log[current_flight]['landing']):
                         cell.value = log[current_flight]['night']
